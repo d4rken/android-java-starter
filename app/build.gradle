@@ -1,0 +1,118 @@
+apply plugin: 'com.android.application'
+
+def gitSha = 'git rev-parse --short HEAD'.execute([], project.rootDir).text.trim()
+def buildTime = new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone("GMT+1"))
+
+android {
+    def versionMajor = 0
+    def versionMinor = 1
+    def versionTag = ""
+    def packageName = "eu.darken.androidjavastarter"
+
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "${packageName}"
+
+        minSdkVersion project.ext.globalMinSdkVersion
+        targetSdkVersion project.ext.globalTargetSdkVersion
+
+        versionCode versionMajor * 10000 + versionMinor
+        versionName "${versionMajor}.${versionMinor}${versionTag}"
+
+        buildConfigField "String", "GITSHA", "\"${gitSha}\""
+        buildConfigField "String", "BUILDTIME", "\"${buildTime}\""
+
+        testInstrumentationRunner "eu.darken.androidjavastarter.ExampleTestRunner"
+    }
+
+    signingConfigs {
+        release {
+        }
+    }
+    def signingPropFile = new File(System.properties['user.home'], ".signing/${packageName}/signing.properties")
+    if (signingPropFile.canRead()) {
+        Properties signingProps = new Properties()
+        signingProps.load(new FileInputStream(signingPropFile))
+        signingConfigs {
+            release {
+                storeFile new File(signingProps['release.storePath'])
+                keyAlias signingProps['release.keyAlias']
+                storePassword signingProps['release.storePassword']
+                keyPassword signingProps['release.keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        applicationVariants.all { variant ->
+            if (variant.buildType.name == "debug") {
+                variant.mergedFlavor.resourceConfigurations.clear()
+                variant.mergedFlavor.resourceConfigurations.add("en")
+            } else if (variant.buildType.name != "debug") {
+                variant.outputs.each { output ->
+                    output.outputFileName = "SD_Maid-v" + defaultConfig.versionName + "(" + defaultConfig.versionCode + ")-" + variant.buildType.name.toUpperCase() + "-" + gitSha + ".apk"
+                }
+            }
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+android {
+    configurations.all {
+        resolutionStrategy.force 'com.google.code.findbugs:jsr305:3.0.2'
+    }
+}
+dependencies {
+    // Support libs
+    implementation "com.android.support:support-annotations:${project.ext.supportLibVersion}"
+    implementation "com.android.support:appcompat-v7:${project.ext.supportLibVersion}"
+    implementation "com.android.support:design:${project.ext.supportLibVersion}"
+    implementation "com.android.support.constraint:constraint-layout:1.1.2"
+
+    // Crashtracking
+    implementation 'com.bugsnag:bugsnag-android:4.3.1'
+
+    // MVP lib
+    implementation 'eu.darken.mvpbakery:library:0.4.1'
+
+    // RX
+    implementation 'io.reactivex.rxjava2:rxandroid:2.0.2'
+    implementation 'io.reactivex.rxjava2:rxjava:2.1.16'
+
+    //Dagger
+    implementation "com.google.dagger:dagger:${daggerVersion}"
+    annotationProcessor "com.google.dagger:dagger-compiler:${daggerVersion}"
+    androidTestAnnotationProcessor "com.google.dagger:dagger-compiler:${daggerVersion}"
+    androidTestImplementation 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation "com.google.dagger:dagger-android:${daggerVersion}"
+    implementation "com.google.dagger:dagger-android-support:${daggerVersion}"
+
+    //Butterknife
+    implementation "com.jakewharton:butterknife:${butterknifeVersion}"
+    annotationProcessor "com.jakewharton:butterknife-compiler:${butterknifeVersion}"
+
+    //Timber
+    implementation "com.jakewharton.timber:timber:4.7.0"
+
+    // Testing
+    testImplementation "junit:junit:4.12"
+    testImplementation "org.mockito:mockito-core:2.20.0"
+
+    androidTestImplementation "org.mockito:mockito-core:2.20.0"
+    androidTestImplementation 'org.mockito:mockito-android:2.19.1'
+
+    androidTestImplementation "com.android.support.test:runner:1.0.2"
+    androidTestImplementation "com.android.support.test:rules:1.0.2"
+    androidTestImplementation "com.android.support.test.espresso:espresso-core:3.0.2"
+    androidTestImplementation 'com.android.support.test.espresso:espresso-contrib:3.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-intents:3.0.2'
+    androidTestImplementation 'com.android.support.test.espresso.idling:idling-concurrent:3.0.2'
+}
