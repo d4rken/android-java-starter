@@ -22,7 +22,7 @@ android {
         buildConfigField "String", "GITSHA", "\"${gitSha}\""
         buildConfigField "String", "BUILDTIME", "\"${buildTime}\""
 
-        testInstrumentationRunner "eu.darken.androidjavastarter.ExampleTestRunner"
+        testInstrumentationRunner "${packageName}.ExampleTestRunner"
     }
 
     signingConfigs {
@@ -54,7 +54,7 @@ android {
                 variant.mergedFlavor.resourceConfigurations.add("en")
             } else if (variant.buildType.name != "debug") {
                 variant.outputs.each { output ->
-                    output.outputFileName = "SD_Maid-v" + defaultConfig.versionName + "(" + defaultConfig.versionCode + ")-" + variant.buildType.name.toUpperCase() + "-" + gitSha + ".apk"
+                    output.outputFileName = "${packageName}-v" + defaultConfig.versionName + "(" + defaultConfig.versionCode + ")-" + variant.buildType.name.toUpperCase() + "-" + gitSha + ".apk"
                 }
             }
         }
